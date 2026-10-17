@@ -21,3 +21,11 @@ table { width:100%; border-collapse:collapse; font-size:.92rem; }
 th, td { text-align:left; padding:8px 6px; border-bottom:1px solid var(--line); vertical-align:top; }
 td.orig { max-width:280px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--muted); }
 code { background:#eef0f6; padding:2px 6px; border-radius:4px; }
+
+/* mobile fix: keep the table inside the card, don't wrap the Copy button */
+table { table-layout: fixed; }
+th:nth-child(1) { width: 46%; }
+th:nth-child(3) { width: 3.6rem; }
+td:first-child { word-break: break-all; }
+td.orig { max-width: none; }
+.result button { flex: none; white-space: nowrap; }
