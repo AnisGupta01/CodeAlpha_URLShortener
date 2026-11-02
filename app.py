@@ -69,7 +69,7 @@ def create_app(db_path=None):
     def generate_code(db):
         for _ in range(10):
             code = "".join(secrets.choice(ALPHABET) for _ in range(CODE_LENGTH))
-            if code not in RESERVED_CODES and not db.execute(
+            if code.lower() not in RESERVED_CODES and not db.execute(
                 "SELECT 1 FROM urls WHERE short_code = ?", (code,)
             ).fetchone():
                 return code
@@ -126,11 +126,16 @@ def create_app(db_path=None):
             code = generate_code(db)
 
         created_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
-        db.execute(
-            "INSERT INTO urls (short_code, original_url, created_at) VALUES (?, ?, ?)",
-            (code, url, created_at),
-        )
-        db.commit()
+        try:
+            db.execute(
+                "INSERT INTO urls (short_code, original_url, created_at) VALUES (?, ?, ?)",
+                (code, url, created_at),
+            )
+            db.commit()
+        except sqlite3.IntegrityError:
+            # Another request took the same code between the check and the insert.
+            db.rollback()
+            return jsonify(error="That short code is already taken. Please try again."), 409
         row = db.execute("SELECT * FROM urls WHERE short_code = ?", (code,)).fetchone()
         return jsonify(row_to_dict(row)), 201
 
