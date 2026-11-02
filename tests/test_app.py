@@ -68,6 +68,16 @@ class URLShortenerTests(unittest.TestCase):
         self.assertEqual(self.shorten(url="https://example.com/y", custom_code="ab").status_code, 400)
         self.assertEqual(self.shorten(url="https://example.com/y", custom_code="api").status_code, 400)
 
+    def test_reserved_codes_are_case_insensitive(self):
+        for code in ["API", "Static", "HEALTH"]:
+            res = self.shorten(url="https://example.com/r", custom_code=code)
+            self.assertEqual(res.status_code, 400, msg=code)
+
+    def test_redirect_preserves_query_and_fragment(self):
+        long_url = "https://example.com/search?q=flask+sqlite&page=2#results"
+        code = self.shorten(url=long_url).get_json()["short_code"]
+        self.assertEqual(self.client.get("/" + code).headers["Location"], long_url)
+
     def test_unknown_code_404(self):
         res = self.client.get("/doesnotexist")
         self.assertEqual(res.status_code, 404)
